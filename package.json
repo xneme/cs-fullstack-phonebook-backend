@@ -1,0 +1,27 @@
+{
+  "name": "phonebook-backend",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "watch": "nodemon index.js",
+    "test": "echo \"No tests!\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xneme/cs-fullstack-phonebook-backend.git"
+  },
+  "author": "Jere Helén",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/xneme/cs-fullstack-phonebook-backend/issues"
+  },
+  "homepage": "https://github.com/xneme/cs-fullstack-phonebook-backend#readme",
+  "dependencies": {
+    "express": "^4.16.4"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.9"
+  }
+}
