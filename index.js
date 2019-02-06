@@ -12,7 +12,7 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(express.static('build'))
 
-morgan.token('body', (req, res) =>
+morgan.token('body', (req) =>
   req.method === 'POST' ? JSON.stringify(req.body) : ''
 )
 app.use(
@@ -69,7 +69,7 @@ app.post('/api/contacts', (req, res, next) => {
 
 app.delete('/api/contacts/:id', (req, res, next) => {
   Contact.findByIdAndRemove(req.params.id)
-    .then((result) => {
+    .then(() => {
       res.status(204).end()
     })
     .catch((error) => next(error))
@@ -100,7 +100,7 @@ app.use(unknownEndpoint)
 const errorHandler = (error, req, res, next) => {
   console.error(error.message)
 
-  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+  if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return res.status(400).send({ error: 'malformatted id' })
   } else if (error.name === 'ValidationError') {
     return res.status(400).json({ error: error.message })

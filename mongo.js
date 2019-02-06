@@ -20,7 +20,7 @@ const contactSchema = new mongoose.Schema({
 
 const Contact = mongoose.model('Contact', contactSchema)
 
-if (process.argv.length == 5) {
+if (process.argv.length === 5) {
   const contact = new Contact({
     name: process.argv[3],
     number: process.argv[4]
