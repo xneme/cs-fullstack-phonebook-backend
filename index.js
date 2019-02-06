@@ -1,8 +1,10 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
 const bodyParser = require('body-parser')
 const morgan = require('morgan')
 const cors = require('cors')
+const Contact = require('./models/contact')
 
 app.use(cors())
 app.use(bodyParser.json())
@@ -16,26 +18,31 @@ app.use(
 )
 
 app.get('/api/contacts', (req, res) => {
-  res.json(contacts)
+  Contact.find({}).then((contacts) => {
+    res.json(contacts.map((contact) => contact.toJSON()))
+  })
 })
 
 app.get('/info', (req, res) => {
-  res.send(
-    `<p>Puhelinluettelossa on ${
-      contacts.length
-    } henkilön tiedot</p><p>${new Date()}</p>`
-  )
+  Contact.find({}).then((contacts) => {
+    res.send(
+      `<p>Puhelinluettelossa on ${
+        contacts.length
+      } henkilön tiedot</p><p>${new Date()}</p>`
+    )
+  })
 })
 
-app.get('/api/contacts/:id', (req, res) => {
-  const id = Number(req.params.id)
-  const contact = contacts.find((contact) => contact.id === id)
-
-  if (contact) {
-    res.json(contact)
-  } else {
-    res.status(404).end()
-  }
+app.get('/api/contacts/:id', (req, res, next) => {
+  Contact.findById(req.params.id)
+    .then((contact) => {
+      if (contact) {
+        res.json(contact.toJSON())
+      } else {
+        res.status(204).end()
+      }
+    })
+    .catch((error) => next(error))
 })
 
 app.post('/api/contacts', (req, res) => {
@@ -45,60 +52,56 @@ app.post('/api/contacts', (req, res) => {
     return res.status(400).json({ error: 'name or number missing' })
   }
 
-  if (
-    contacts.some(
-      (contact) => contact.name.toLowerCase() === body.name.toLowerCase()
-    )
-  ) {
-    return res.status(400).json({ error: 'name must be unique' })
-  }
+  const contact = new Contact({
+    name: body.name,
+    number: body.number
+  })
+
+  contact.save().then((savedNote) => {
+    res.json(savedNote.toJSON())
+  })
+})
+
+app.delete('/api/contacts/:id', (req, res, next) => {
+  Contact.findByIdAndRemove(req.params.id)
+    .then((result) => {
+      res.status(204).end()
+    })
+    .catch((error) => next(error))
+})
+
+app.put('/api/contacts/:id', (req, res, next) => {
+  const body = req.body
 
   const contact = {
-    id: generateId(),
     name: body.name,
     number: body.number
   }
 
-  contacts = contacts.concat(contact)
-
-  res.json(contact)
+  Contact.findByIdAndUpdate(req.params.id, contact, { new: true })
+    .then((updatedContact) => {
+      res.json(updatedContact.toJSON())
+    })
+    .catch((error) => next(error))
 })
 
-app.delete('/api/contacts/:id', (req, res) => {
-  const id = Number(req.params.id)
-  contacts = contacts.filter((contact) => contact.id !== id)
+const unknownEndpoint = (req, res) => {
+  res.status(404).send({ error: 'unknown endpoint' })
+}
+app.use(unknownEndpoint)
 
-  res.status(204).end()
-})
+const errorHandler = (error, req, res, next) => {
+  console.error(error.message)
 
-const PORT = process.env.PORT || 3001
+  if (error.name === 'CastError' && error.kind == 'ObjectId') {
+    return res.status(400).send({ error: 'malformatted id' })
+  }
+
+  next(error)
+}
+app.use(errorHandler)
+
+const PORT = process.env.PORT
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
-
-const generateId = () => {
-  return Math.floor(Math.random() * 1000000)
-}
-
-let contacts = [
-  {
-    name: 'Arto Hellas',
-    number: '045-123456',
-    id: 1
-  },
-  {
-    name: 'Martti Tienari',
-    number: '041-1234567',
-    id: 2
-  },
-  {
-    name: 'Arto Järvinen',
-    number: '09-123456',
-    id: 3
-  },
-  {
-    name: 'Lea Kutvonen',
-    number: '040-123456',
-    id: 4
-  }
-]
